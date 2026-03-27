@@ -514,19 +514,27 @@ function makeSpRow(deckId,mode,ai,group,cls){
     h+='<div class="so-item"><div class="'+c+'" onclick="startSkillPick(\''+deckId+'\',\''+mode+'\','+ai+','+i+')">'+inner+rm+'</div><div class="so-seq">'+(i+1)+(name!=' '?'<br><span style="color:var(--c-skill)">'+name+'</span>':'')+'</div></div>';
   });
   h+='</div></div>';
-  // 펫 3칸
+  // 펫 3칸 (1번 크게, 2·3번 작게)
   h+='<div class="sp-block">';
   h+='<div class="sp-block-label pet">🐾 펫</div>';
-  h+='<div class="so-row">';
+  h+='<div class="so-row" style="align-items:flex-end;">';
   var _pets=group.pets||[null,null,null];
   _pets.forEach(function(pid,pi){
     var pet=pid?getPet(pid):null;
     var isActivePet=pick&&pick.mode==='pet'&&pick.deckId===deckId&&pick.subMode===mode&&pick.atkIdx===ai&&pick.petIdx===pi;
-    var pcls='pet-slot'+(isActivePet?' active-pick':'')+(pet?' filled':'');
-    h+='<div class="so-item"><div class="'+pcls+'" onclick="startPetPick(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">';
-    if(pet){h+=(pet.img?'<img src="'+pet.img+'">':'<span class="pet-add">🐾</span>')+'<div class="pet-rm" onclick="event.stopPropagation();rmPet(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">✕</div>';}
-    else h+='<span class="pet-add">🐾</span>';
-    h+='</div><div class="so-seq">'+(pet?xe(pet.name.slice(0,4)):(pi+1)+'')+'</div></div>';
+    if(pi===0){
+      var pcls='pet-slot'+(isActivePet?' active-pick':'')+(pet?' filled':'');
+      h+='<div class="so-item"><div class="'+pcls+'" onclick="startPetPick(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">';
+      if(pet){h+=(pet.img?'<img src="'+pet.img+'">':'<span class="pet-add">🐾</span>')+'<div class="pet-rm" onclick="event.stopPropagation();rmPet(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">✕</div>';}
+      else h+='<span class="pet-add">🐾</span>';
+      h+='</div><div class="so-seq">'+(pet?xe(pet.name.slice(0,4)):'1')+'</div></div>';
+    } else {
+      var pcls='pet-slot-sm'+(isActivePet?' active-pick':'')+(pet?' filled':'');
+      h+='<div class="so-item"><div class="'+pcls+'" onclick="startPetPick(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">';
+      if(pet){h+=(pet.img?'<img src="'+pet.img+'">':'<span class="pet-add" style="font-size:13px">🐾</span>')+'<div class="pet-rm" onclick="event.stopPropagation();rmPet(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">✕</div>';}
+      else h+='<span class="pet-add" style="font-size:13px">🐾</span>';
+      h+='</div><div class="so-seq">'+(pet?xe(pet.name.slice(0,4)):pi+1)+'</div></div>';
+    }
   });
   h+='</div></div>';
   h+='</div>';
