@@ -121,13 +121,28 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI','Noto Sans KR
 .pet-slot:hover .pet-rm{display:flex;}
 .pet-name-lbl{font-size:8px;color:var(--text2);text-align:center;max-width:46px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
 
-/* ── ATK DECK CARD ── */
-.atk-card{background:rgba(69,184,122,.03);border:1px solid rgba(69,184,122,.12);border-radius:10px;margin-bottom:10px;overflow:hidden;}
-.atk-card-header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid rgba(69,184,122,.1);}
+/* ── ATK DECK GRID (2열) ── */
+.atk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:700px){.atk-grid{grid-template-columns:1fr;}}
+.atk-card{background:rgba(69,184,122,.03);border:1px solid rgba(69,184,122,.12);border-radius:10px;overflow:hidden;}
+.atk-card-header{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;border-bottom:1px solid rgba(69,184,122,.1);}
 .atk-card-num{font-size:10px;font-weight:700;color:var(--c-atk);}
-.atk-deck-del{width:22px;height:22px;border-radius:6px;background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.2);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s;}
+.atk-deck-del{width:20px;height:20px;border-radius:5px;background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.2);color:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;transition:all .15s;}
 .atk-deck-del:hover{background:rgba(224,85,85,.3);}
-.atk-card-body{padding:10px;}
+.atk-card-body{padding:8px;}
+
+/* 예비펫 슬롯 (작은 사이즈) */
+.pet-slot-sm{width:34px;height:34px;border-radius:6px;background:rgba(100,160,240,.04);border:1px dashed rgba(100,160,240,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;position:relative;transition:all .15s;flex-shrink:0;}
+.pet-slot-sm:hover{border-color:rgba(100,160,240,.5);}
+.pet-slot-sm.filled{border-style:solid;border-color:rgba(100,160,240,.25);}
+.pet-slot-sm.active-pick{border-color:var(--c-pet)!important;box-shadow:0 0 0 1px var(--c-pet);}
+.pet-slot-sm img{width:100%;height:100%;object-fit:cover;display:block;}
+.pet-slot-sm .pet-add{font-size:14px;color:rgba(100,160,240,.25);}
+.pet-slot-sm .pet-rm{position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:rgba(224,85,85,.85);display:none;align-items:center;justify-content:center;font-size:7px;color:#fff;cursor:pointer;}
+.pet-slot-sm:hover .pet-rm{display:flex;}
+.pet-slots-group{display:flex;align-items:flex-end;gap:4px;}
+.pet-slot-sm-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.pet-sm-lbl{font-size:7px;color:var(--text3);}
 
 .add-atk-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--c-atk);cursor:pointer;padding:6px 12px;border:1px dashed rgba(69,184,122,.35);border-radius:8px;background:transparent;transition:all .15s;font-weight:600;}
 .add-atk-btn:hover{background:rgba(69,184,122,.07);border-color:rgba(69,184,122,.6);}
@@ -359,7 +374,7 @@ heroes.forEach(function(h){if(!h.s1)h.s1='';if(!h.s2)h.s2='';});
 
 var pets = JSON.parse(localStorage.getItem('sk6_pets')||'[]');
 
-function emptyDeckGroup(){return {heroes:[null,null,null],skillOrder:[null,null,null],pet:null};}
+function emptyDeckGroup(){return {heroes:[null,null,null],skillOrder:[null,null,null],pets:[null,null,null]};}
 
 var decks = JSON.parse(localStorage.getItem('sk6_decks')||'null') || [
   {id:'d1',name:'방어덱 1',def:emptyDeckGroup(),atks:[emptyDeckGroup()],note:'',expanded:false},
@@ -378,11 +393,13 @@ decks.forEach(function(d){
     if(Array.isArray(a))return{heroes:a,skillOrder:[null,null,null],pet:null};
     if(!a.heroes)return{heroes:[null,null,null],skillOrder:[null,null,null],pet:null};
     if(!a.skillOrder)a.skillOrder=[null,null,null];
-    if(a.pet===undefined)a.pet=null;
+    if(!a.pets)a.pets=[a.pet||null,null,null];
+    delete a.pet;
     return a;
   });
   if(!d.def.skillOrder)d.def.skillOrder=[null,null,null];
-  if(d.def.pet===undefined)d.def.pet=null;
+  if(!d.def.pets)d.def.pets=[d.def.pet||null,null,null];
+  delete d.def.pet;
 });
 
 var pick=null, heroFilter='전체';
@@ -448,6 +465,7 @@ function renderDecks(){
     // ── 공격덱 섹션 ──
     html+='<div class="deck-section s-atk">';
     html+='<div class="sec-label"><span>🟢 카운터 공격덱</span></div>';
+    html+='<div class="atk-grid">';
     deck.atks.forEach(function(atk,ai){
       html+='<div class="atk-card">';
       html+='<div class="atk-card-header"><span class="atk-card-num">공격덱 '+(ai+1)+'</span>';
@@ -460,6 +478,7 @@ function renderDecks(){
       html+=makeSpRow(deck.id,'atk',ai,atk,'atk');
       html+='</div></div>';
     });
+    html+='</div>';
     html+='<div class="add-atk-btn" onclick="addAtkDeck(\''+deck.id+'\')">＋ 공격덱 추가</div>';
     html+='</div>';
 
@@ -495,18 +514,21 @@ function makeSpRow(deckId,mode,ai,group,cls){
     h+='<div class="so-item"><div class="'+c+'" onclick="startSkillPick(\''+deckId+'\',\''+mode+'\','+ai+','+i+')">'+inner+rm+'</div><div class="so-seq">'+(i+1)+(name!=' '?'<br><span style="color:var(--c-skill)">'+name+'</span>':'')+'</div></div>';
   });
   h+='</div></div>';
-  // 펫
+  // 펫 3칸
   h+='<div class="sp-block">';
   h+='<div class="sp-block-label pet">🐾 펫</div>';
-  var pet=group.pet?getPet(group.pet):null;
-  var isActivePet=pick&&pick.mode==='pet'&&pick.deckId===deckId&&pick.subMode===mode&&pick.atkIdx===ai;
-  var pcls='pet-slot'+(isActivePet?' active-pick':'')+(pet?' filled':'');
-  h+='<div class="'+pcls+'" onclick="startPetPick(\''+deckId+'\',\''+mode+'\','+ai+')">';
-  if(pet){h+=(pet.img?'<img src="'+pet.img+'">':'<span class="pet-add">🐾</span>')+'<div class="pet-rm" onclick="event.stopPropagation();rmPet(\''+deckId+'\',\''+mode+'\','+ai+')">✕</div>';}
-  else h+='<span class="pet-add">🐾</span>';
-  h+='</div>';
-  if(pet)h+='<div class="pet-name-lbl">'+xe(pet.name)+'</div>';
-  h+='</div>';
+  h+='<div class="so-row">';
+  var _pets=group.pets||[null,null,null];
+  _pets.forEach(function(pid,pi){
+    var pet=pid?getPet(pid):null;
+    var isActivePet=pick&&pick.mode==='pet'&&pick.deckId===deckId&&pick.subMode===mode&&pick.atkIdx===ai&&pick.petIdx===pi;
+    var pcls='pet-slot'+(isActivePet?' active-pick':'')+(pet?' filled':'');
+    h+='<div class="so-item"><div class="'+pcls+'" onclick="startPetPick(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">';
+    if(pet){h+=(pet.img?'<img src="'+pet.img+'">':'<span class="pet-add">🐾</span>')+'<div class="pet-rm" onclick="event.stopPropagation();rmPet(\''+deckId+'\',\''+mode+'\','+ai+','+pi+')">✕</div>';}
+    else h+='<span class="pet-add">🐾</span>';
+    h+='</div><div class="so-seq">'+(pet?xe(pet.name.slice(0,4)):(pi+1)+'')+'</div></div>';
+  });
+  h+='</div></div>';
   h+='</div>';
   return h;
 }
@@ -620,8 +642,9 @@ function rmSkillOrder(deckId,mode,ai,si){
 }
 
 // ── PICK: PET ────────────────────────────────────────────────
-function startPetPick(deckId,mode,ai){
-  pick={mode:'pet',deckId:deckId,subMode:mode,atkIdx:ai};
+function startPetPick(deckId,mode,ai,pi){
+  pi=pi||0;
+  pick={mode:'pet',deckId:deckId,subMode:mode,atkIdx:ai,petIdx:pi};
   var d=decks.find(function(x){return x.id===deckId;});
   document.getElementById('pick-hint').className='pick-hint show pet-mode';
   document.getElementById('pick-hint-text').textContent='['+(d?d.name:'')+'] '+(mode==='def'?'방어덱':'공격덱 '+(ai+1))+' 펫 선택';
@@ -630,13 +653,14 @@ function startPetPick(deckId,mode,ai){
 function assignPet(petId){
   if(!pick||pick.mode!=='pet')return;
   var deck=decks.find(function(x){return x.id===pick.deckId;});if(!deck)return;
-  getGroup(deck,pick.subMode,pick.atkIdx).pet=petId;
+  var grp=getGroup(deck,pick.subMode,pick.atkIdx);if(!grp.pets)grp.pets=[null,null,null];grp.pets[pick.petIdx||0]=petId;
   pick=null;document.getElementById('pick-hint').className='pick-hint';
   persist();renderDecks();showHeroSide();renderHeroList();
 }
-function rmPet(deckId,mode,ai){
+function rmPet(deckId,mode,ai,pi){
+  pi=pi||0;
   var d=decks.find(function(x){return x.id===deckId;});if(!d)return;
-  getGroup(d,mode,ai).pet=null;persist();renderDecks();
+  var grp=getGroup(d,mode,ai);if(!grp.pets)grp.pets=[null,null,null];grp.pets[pi]=null;persist();renderDecks();
 }
 
 // ── SIDE ─────────────────────────────────────────────────────
@@ -760,7 +784,7 @@ function cancelPetEdit(){
 function delPet(id){
   if(!confirm('펫을 삭제할까요?'))return;
   decks.forEach(function(d){
-    function cleanGroup(g){if(g.pet===id)g.pet=null;}
+    function cleanGroup(g){if(!g.pets)g.pets=[g.pet||null,null,null];g.pets=g.pets.map(function(x){return x===id?null:x;});}
     cleanGroup(d.def);d.atks.forEach(cleanGroup);
   });
   pets=pets.filter(function(x){return x.id!==id;});
